@@ -350,9 +350,9 @@ class Client implements TransactionalTransportInterface
         if (count($paths) == 0) {
             return array();
         }
-        $url = array_shift($paths);
 
-        if (count($paths) == 0) {
+        if (count($paths) == 1) {
+            $url = array_shift($paths);
             try {
                 return array($url => $this->getNode($url));
             } catch (\PHPCR\ItemNotFoundException $e) {
@@ -361,14 +361,15 @@ class Client implements TransactionalTransportInterface
         }
         $body = array();
 
-        $url = $this->encodePathForDavex($url).".0.json";
+        $url = $this->encodePathForDavex("/").".0.json";
         foreach ($paths as $path) {
-            $body[] = http_build_query(array(":get"=>$path));
+            $body[] = http_build_query(array(":include"=>$path));
         }
         $body = implode("&",$body);
-        $request = $this->getRequest(Request::POST, $url);
-        $request->setBody($body);
-        $request->setContentType('application/x-www-form-urlencoded');
+        //I actually would prefer POST, so leaving the code here, waiting for an answer from apache
+        $request = $this->getRequest(Request::GET, $url.'?'.$body);
+        //$request->setBody($body);
+        //$request->setContentType('application/x-www-form-urlencoded');
         $request->setTransactionId($this->transactionToken);
         try {
             $data = $request->executeJson();
